@@ -32,7 +32,7 @@
 </script><!-- Bootstrap Icons -->
 <link rel="stylesheet" href="vendor/bootstrap-icons/font/bootstrap-icons.min.css">
 <!-- Stylesheets -->
-<link rel="stylesheet" href="css/main.css?v=23b0ad49">
+<link rel="stylesheet" href="css/main.css?v=0e8b0eb7">
 <!-- JavaScript -->
 <script src="vendor/jszip/jszip.min.js"></script>
 <script defer src="js/main.js?v=34959b87"></script>
@@ -417,9 +417,20 @@
 
         </div><!-- .tabs -->
 
-        <footer class="page-footer border-top text-muted">
-            <p>&copy; <span id="copyright-year"></span> <a href="https://philipnewborough.co.uk" target="_blank" rel="noopener">Philip Newborough</a>. <a href="https://github.com/corenominal/favicons-pwa.philipnewborough.co.uk" target="_blank" rel="noopener"><i class="bi bi-github"></i> View on GitHub</a>.</p>
-            <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+        <footer class="page-footer border-top text-muted mt-4 pt-3">
+            <div class="footer-row">
+                <div class="footer-left">&copy; <span id="copyright-year"></span> <a href="https://philipnewborough.co.uk" target="_blank" rel="noopener">Philip Newborough</a>. <span id="site-version" class="footer-version"></span></div>
+                <div class="footer-right"><a href="https://github.com/corenominal/favicons-pwa.philipnewborough.co.uk" target="_blank" rel="noopener"><i class="bi bi-github"></i> View on GitHub</a></div>
+            </div>
+            <script>(function(){
+                document.getElementById('copyright-year').textContent = new Date().getFullYear();
+                var el = document.getElementById('site-version');
+                if (!el) return;
+                fetch('/sw.js').then(function(r){ return r.text(); }).then(function(t){
+                    var m = t.match(/const\s+CACHE_NAME\s*=\s*['"][^'"]*-(v[0-9.]+)['"]/i);
+                    if (m) el.textContent = ' (' + m[1] + ')';
+                }).catch(function(){});
+            })();</script>
         </footer>
 
     </div> <!--.container-->

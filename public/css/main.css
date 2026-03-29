@@ -155,6 +155,38 @@ a:hover {
     padding-bottom: 2rem;
 }
 
+.page-footer .footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+@media (max-width: 575px) {
+    .page-footer .footer-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+/* Footer link styling: remove underlines on all states */
+.page-footer a {
+    text-decoration: none !important;
+}
+.page-footer a:hover,
+.page-footer a:focus,
+.page-footer a:active {
+    text-decoration: none !important;
+}
+
+/* Version text after the author name */
+.footer-version {
+    color: var(--subtle);
+    font-size: 0.9rem;
+    margin-left: 0.35rem;
+}
+
 /* Spacing */
 .mb-0 { margin-bottom: 0     !important; }
 .mb-2 { margin-bottom: .5rem  !important; }
@@ -233,6 +265,7 @@ code {
     margin-top: 1.5rem;
     background-color: var(--surface);
     border: 1px solid var(--border);
+    border-top: 3px solid var(--code-fg, #7b61ff);
     padding: 1rem;
     border-radius: 0.5rem;
     box-shadow: 0 8px 22px rgba(0,0,0,0.25);
