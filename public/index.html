@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Favicon & PWA Icon Generator</title>
+<!-- Favicon -->
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icon-16x16.png">
+<!-- Apple Touch Icon -->
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<!-- Web App Manifest -->
+<link rel="manifest" href="manifest.json">
+<!-- Theme Colour -->
+<meta name="theme-color" content="#272a36">
+<!-- Prevent flash of wrong theme -->
+<script>
+(function(){
+    var saved = localStorage.getItem('theme');
+    var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+})();
+</script><!-- Bootstrap Icons -->
+<link rel="stylesheet" href="vendor/bootstrap-icons/font/bootstrap-icons.min.css">
+<!-- Stylesheets -->
+<link rel="stylesheet" href="css/main.css?v=c14e35c1">
+<!-- JavaScript -->
+<script src="vendor/jszip/jszip.min.js"></script>
+<script defer src="js/main.js?v=34959b87"></script>
+<!-- Service Worker registration -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').then(registration => {
+                // When the page becomes visible again (e.g. PWA resumed from background),
+                // check for a newer SW so updates aren't missed between sessions.
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        registration.update();
+                    }
+                });
+            });
+        });
+        // When a new SW takes control (after an update), reload to get fresh assets.
+        // The firstSW guard prevents a reload on the very first install.
+        const firstSW = !navigator.serviceWorker.controller;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!firstSW) {
+                window.location.reload();
+            }
+        });
+    }
+</script>
+</head>
+<body>
+    <input class="d-none" type="file" id="upload">
+    <div class="container">
+
+        <header class="page-header">
+            <img src="img/icon-512x512.png" alt="App icon" class="app-icon">
+            <div class="page-header-text">
+                <h1 class="h2">Favicon &amp; PWA Icon Generator</h1>
+            </div>
+            <button class="btn-theme" id="btn-theme" aria-label="Toggle theme" title="Toggle light/dark theme">
+                <i class="bi bi-moon-stars-fill" id="theme-icon"></i>
+            </button>
+        </header>
+
+        <div class="tabs">
+
+            <div class="tab-nav">
+                <button type="button" class="tab-btn active" data-tab="icons"><i class="bi bi-images"></i><span class="btn-label"> Icons</span></button>
+                <button type="button" class="tab-btn" data-tab="manifest"><i class="bi bi-file-earmark-text"></i><span class="btn-label"> Manifest</span></button>
+                <button type="button" class="tab-btn" data-tab="html"><i class="bi bi-code-slash"></i><span class="btn-label"> HTML</span></button>
+                <button type="button" class="tab-btn" data-tab="export"><i class="bi bi-download"></i><span class="btn-label"> Export</span></button>
+                <button type="button" class="tab-btn tab-btn--right" data-tab="about"><i class="bi bi-info-circle"></i><span class="btn-label"> About</span></button>
+            </div>
+
+            <div class="tab-content">
+
+                <!-- Icons tab -->
+                <div class="tab-pane active" id="tab-icons">
+                    <h2 class="tab-pane-title"><i class="bi bi-images"></i> Icons</h2>
+                    <div id="drop-overlay" class="drop-overlay">
+                        <div class="drop-overlay-content">
+                            <i class="bi bi-cloud-upload"></i>
+                            <p>Drop image here</p>
+                        </div>
+                    </div>
+                    <div class="mb-4 icons-toolbar">
+                        <button id="btn-upload" class="btn btn-dark"><i class="bi bi-upload"></i><span class="btn-label"> Upload New Image</span></button>
+                        <button id="btn-reset" class="btn btn-dark" title="Restore the default unicorn image" disabled><i class="bi bi-arrow-counterclockwise"></i><span class="btn-label"> Reset</span></button>
+                        <div class="safe-zone-btn-group">
+                            <button id="btn-safe-zone" class="btn btn-dark" title="Overlay the PWA maskable icon safe zone (80% circle)"><i class="bi bi-shield-check"></i><span class="btn-label"> Safe Zone</span></button><button id="btn-safe-zone-info" class="btn btn-dark btn-safe-zone-info" aria-label="What is the safe zone?" title="What is the safe zone?"><i class="bi bi-info-circle"></i></button>
+                            <div class="safe-zone-popover" id="safe-zone-popover" role="tooltip" aria-hidden="true">
+                                <button class="safe-zone-popover-close" id="safe-zone-popover-close" aria-label="Close"><i class="bi bi-x"></i></button>
+                                <p class="safe-zone-popover-heading"><i class="bi bi-shield-check"></i> Maskable Icon Safe Zone</p>
+                                <p>When a PWA is installed, some platforms (Android, ChromeOS) may <strong>mask</strong> the icon into a shape — circle, squircle, teardrop, etc. — clipping away the outer edges.</p>
+                                <p>The safe zone is the <strong>central 80% circle</strong>. Content inside it is guaranteed to be visible on every platform.</p>
+                                <p class="safe-zone-popover-when"><i class="bi bi-check-circle-fill"></i> <strong>Worth caring about</strong> if your icon has a logo or text close to the edges, or if you're targeting Android as a PWA.</p>
+                                <p class="safe-zone-popover-when safe-zone-popover-when--low"><i class="bi bi-dash-circle"></i> <strong>Less critical</strong> for plain browser favicons (desktop tabs, bookmarks) — they are never masked.</p>
+                                <p class="safe-zone-popover-note">Toggle the overlay above to see the boundary on each preview.</p>
+                            </div>
+                        </div>
+                        <div class="edit-dropdown-group">
+                            <button id="btn-edit-shape" class="btn btn-dark" title="Apply a shape clip to the icon"><i class="bi bi-pencil-square"></i><span class="btn-label"> Edit</span> <i class="bi bi-chevron-down edit-caret"></i></button>
+                            <div class="edit-dropdown-menu" id="edit-dropdown-menu" aria-hidden="true">
+                                <button class="edit-dropdown-item" data-shape="circle"><i class="bi bi-circle"></i> Round</button>
+                                <button class="edit-dropdown-item" data-shape="squircle"><i class="bi bi-app"></i> Squircle</button>
+                                <button class="edit-dropdown-item" data-shape="rounded"><i class="bi bi-square"></i> Rounded</button>
+                                <div class="edit-dropdown-divider"></div>
+                                <button class="edit-dropdown-item" id="btn-edit-restore" disabled><i class="bi bi-arrow-counterclockwise"></i> Restore Original</button>
+                            </div>
+                        </div>
+                        <span class="drop-hint"><i class="bi bi-arrow-down-circle"></i> Or drag &amp; drop an image anywhere in this pane</span>
+                    </div>
+                    <div class="row">
+
+                        <!-- 512px -->
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="canvas-wrap mb-2">
+                                <canvas id="canvas-512" class="canvas-512 border bg-check d-block" width="512" height="512"></canvas>
+                                <svg class="safe-zone-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" fill="rgba(0,0,0,0.5)" d="M0,0 H100 V100 H0 Z M50,10 A40,40,0,0,1,90,50 A40,40,0,0,1,50,90 A40,40,0,0,1,10,50 A40,40,0,0,1,50,10 Z"/><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,80,80,0.85)" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
+                            </div>
+                            <span class="text-muted">512×512 px</span>
+                        </div>
+
+                        <!-- 256px + 192px + 180px + 152px + 144px -->
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="mb-4">
+                                <div class="canvas-wrap mb-2">
+                                    <canvas id="canvas-256" class="canvas-256 border bg-check d-block" width="256" height="256"></canvas>
+                                    <svg class="safe-zone-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" fill="rgba(0,0,0,0.5)" d="M0,0 H100 V100 H0 Z M50,10 A40,40,0,0,1,90,50 A40,40,0,0,1,50,90 A40,40,0,0,1,10,50 A40,40,0,0,1,50,10 Z"/><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,80,80,0.85)" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
+                                </div>
+                                <span class="text-muted">256×256 px</span>
+                            </div>
+                            <div class="mb-4">
+                                <div class="canvas-wrap mb-2">
+                                    <canvas id="canvas-192" class="canvas-192 border bg-check d-block" width="192" height="192"></canvas>
+                                    <svg class="safe-zone-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" fill="rgba(0,0,0,0.5)" d="M0,0 H100 V100 H0 Z M50,10 A40,40,0,0,1,90,50 A40,40,0,0,1,50,90 A40,40,0,0,1,10,50 A40,40,0,0,1,50,10 Z"/><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,80,80,0.85)" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
+                                </div>
+                                <span class="text-muted">192×192 px</span>
+                            </div>
+                            <div class="mb-4">
+                                <div class="canvas-wrap mb-2">
+                                    <canvas id="canvas-180" class="canvas-180 border bg-check d-block" width="180" height="180"></canvas>
+                                    <svg class="safe-zone-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" fill="rgba(0,0,0,0.5)" d="M0,0 H100 V100 H0 Z M50,10 A40,40,0,0,1,90,50 A40,40,0,0,1,50,90 A40,40,0,0,1,10,50 A40,40,0,0,1,50,10 Z"/><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,80,80,0.85)" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
+                                </div>
+                                <span class="text-muted">180×180 px</span>
+                            </div>
+                            <div class="mb-4">
+                                <div class="canvas-wrap mb-2">
+                                    <canvas id="canvas-152" class="canvas-152 border bg-check d-block" width="152" height="152"></canvas>
+                                    <svg class="safe-zone-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" fill="rgba(0,0,0,0.5)" d="M0,0 H100 V100 H0 Z M50,10 A40,40,0,0,1,90,50 A40,40,0,0,1,50,90 A40,40,0,0,1,10,50 A40,40,0,0,1,50,10 Z"/><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,80,80,0.85)" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
+                                </div>
+                                <span class="text-muted">152×152 px</span>
+                            </div>
+                            <div>
+                                <div class="canvas-wrap mb-2">
+                                    <canvas id="canvas-144" class="canvas-144 border bg-check d-block" width="144" height="144"></canvas>
+                                    <svg class="safe-zone-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" fill="rgba(0,0,0,0.5)" d="M0,0 H100 V100 H0 Z M50,10 A40,40,0,0,1,90,50 A40,40,0,0,1,50,90 A40,40,0,0,1,10,50 A40,40,0,0,1,50,10 Z"/><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,80,80,0.85)" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
+                                </div>
+                                <span class="text-muted">144×144 px</span>
+                            </div>
+                        </div>
+
+                        <!-- 128px + 64px + 32px + 16px -->
+                        <div class="col-lg-4 col-md-12 mb-4">
+                            <div class="small-previews-grid">
+                                <div>
+                                    <div class="canvas-wrap mb-2">
+                                        <canvas id="canvas-128" class="canvas-128 border bg-check d-block" width="128" height="128"></canvas>
+                                        <svg class="safe-zone-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" fill="rgba(0,0,0,0.5)" d="M0,0 H100 V100 H0 Z M50,10 A40,40,0,0,1,90,50 A40,40,0,0,1,50,90 A40,40,0,0,1,10,50 A40,40,0,0,1,50,10 Z"/><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,80,80,0.85)" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
+                                    </div>
+                                    <span class="text-muted">128×128 px</span>
+                                </div>
+                                <div>
+                                    <div class="canvas-wrap mb-2">
+                                        <canvas id="canvas-96" class="canvas-96 border bg-check d-block" width="96" height="96"></canvas>
+                                        <svg class="safe-zone-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" fill="rgba(0,0,0,0.5)" d="M0,0 H100 V100 H0 Z M50,10 A40,40,0,0,1,90,50 A40,40,0,0,1,50,90 A40,40,0,0,1,10,50 A40,40,0,0,1,50,10 Z"/><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,80,80,0.85)" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
+                                    </div>
+                                    <span class="text-muted">96×96 px</span>
+                                </div>
+                                <div>
+                                    <div class="canvas-wrap mb-2">
+                                        <canvas id="canvas-64" class="canvas-64 border bg-check d-block" width="64" height="64"></canvas>
+                                        <svg class="safe-zone-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" fill="rgba(0,0,0,0.5)" d="M0,0 H100 V100 H0 Z M50,10 A40,40,0,0,1,90,50 A40,40,0,0,1,50,90 A40,40,0,0,1,10,50 A40,40,0,0,1,50,10 Z"/><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,80,80,0.85)" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
+                                    </div>
+                                    <span class="text-muted">64×64 px</span>
+                                </div>
+                                <div>
+                                    <div class="canvas-wrap mb-2">
+                                        <canvas id="canvas-48" class="canvas-48 border bg-check d-block" width="48" height="48"></canvas>
+                                        <svg class="safe-zone-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" fill="rgba(0,0,0,0.5)" d="M0,0 H100 V100 H0 Z M50,10 A40,40,0,0,1,90,50 A40,40,0,0,1,50,90 A40,40,0,0,1,10,50 A40,40,0,0,1,50,10 Z"/><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,80,80,0.85)" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
+                                    </div>
+                                    <span class="text-muted">48×48 px</span>
+                                </div>
+                                <div>
+                                    <div class="canvas-wrap mb-2">
+                                        <canvas id="canvas-32" class="canvas-32 border bg-check d-block" width="32" height="32"></canvas>
+                                        <svg class="safe-zone-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" fill="rgba(0,0,0,0.5)" d="M0,0 H100 V100 H0 Z M50,10 A40,40,0,0,1,90,50 A40,40,0,0,1,50,90 A40,40,0,0,1,10,50 A40,40,0,0,1,50,10 Z"/><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,80,80,0.85)" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
+                                    </div>
+                                    <span class="text-muted">32×32 px</span>
+                                </div>
+                                <div>
+                                    <div class="canvas-wrap mb-2">
+                                        <canvas id="canvas-16" class="canvas-16 border bg-check d-block" width="16" height="16"></canvas>
+                                        <svg class="safe-zone-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" fill="rgba(0,0,0,0.5)" d="M0,0 H100 V100 H0 Z M50,10 A40,40,0,0,1,90,50 A40,40,0,0,1,50,90 A40,40,0,0,1,10,50 A40,40,0,0,1,50,10 Z"/><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,80,80,0.85)" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
+                                    </div>
+                                    <span class="text-muted">16×16 px</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Shape previews -->
+                    <div class="shape-previews-section">
+                        <p class="shape-previews-title">Shape Previews</p>
+                        <div class="shape-previews-row">
+                            <div class="shape-preview-item">
+                                <canvas id="canvas-shape-circle" class="shape-preview-canvas bg-check" width="200" height="200"></canvas>
+                                <span class="text-muted">Circle</span>
+                            </div>
+                            <div class="shape-preview-item">
+                                <canvas id="canvas-shape-squircle" class="shape-preview-canvas bg-check" width="200" height="200"></canvas>
+                                <span class="text-muted">Squircle (iOS)</span>
+                            </div>
+                            <div class="shape-preview-item">
+                                <canvas id="canvas-shape-rounded" class="shape-preview-canvas bg-check" width="200" height="200"></canvas>
+                                <span class="text-muted">Rounded square</span>
+                            </div>
+                            <div class="shape-preview-item">
+                                <canvas id="canvas-shape-teardrop" class="shape-preview-canvas bg-check" width="200" height="200"></canvas>
+                                <span class="text-muted">Teardrop</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Manifest tab -->
+                <div class="tab-pane" id="tab-manifest">
+                    <h2 class="tab-pane-title"><i class="bi bi-file-earmark-text"></i> Manifest</h2>
+                    <div class="row">
+
+                        <div class="col-lg-6 mb-4">
+                            <form id="manifest-form">
+                                <div class="mb-3">
+                                    <label class="form-label" for="manifest-name">Name</label>
+                                    <input class="form-control" type="text" id="manifest-name" placeholder="My App" value="My App" minlength="1" maxlength="45">
+                                    <small class="form-text">The full name of your app, shown on install prompts and splash screens. Max 45 characters.</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="manifest-short-name">Short Name</label>
+                                    <input class="form-control" type="text" id="manifest-short-name" placeholder="App" value="My App" minlength="1" maxlength="12">
+                                    <small class="form-text">A shorter version of the name, used where space is limited — e.g. beneath a home screen icon. Max 12 characters.</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="manifest-description">Description</label>
+                                    <textarea class="form-control" id="manifest-description" placeholder="A short description of your app." maxlength="300"></textarea>
+                                    <small class="form-text">A brief description of what your app does. Max 300 characters.</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="manifest-start-url">Start URL</label>
+                                    <input class="form-control" type="text" id="manifest-start-url" placeholder="/" value="/">
+                                    <small class="form-text">The URL that loads when the app is launched. Use <code>/</code> for the site root.</small>
+                                </div>
+                                <div class="form-grid mb-3">
+                                    <div>
+                                        <label class="form-label" for="manifest-theme-color">Theme Colour</label>
+                                        <div class="color-input-group">
+                                            <input type="color" id="manifest-theme-color-picker" value="#282a36">
+                                            <input class="form-control" type="text" id="manifest-theme-color" value="#282a36" maxlength="7" placeholder="#000000">
+                                        </div>
+                                        <small class="form-text">Colours the browser UI chrome (e.g. the address bar on mobile).</small>
+                                    </div>
+                                    <div>
+                                        <label class="form-label" for="manifest-bg-color">Background Colour</label>
+                                        <div class="color-input-group">
+                                            <input type="color" id="manifest-bg-color-picker" value="#282a36">
+                                            <input class="form-control" type="text" id="manifest-bg-color" value="#282a36" maxlength="7" placeholder="#000000">
+                                        </div>
+                                        <small class="form-text">Shown on the splash screen while your app loads.</small>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="manifest-display">Display Mode</label>
+                                    <select class="form-control" id="manifest-display">
+                                        <option value="standalone">standalone</option>
+                                        <option value="fullscreen">fullscreen</option>
+                                        <option value="minimal-ui">minimal-ui</option>
+                                        <option value="browser">browser</option>
+                                    </select>
+                                    <small class="form-text"><strong>standalone</strong> — looks like a native app with no browser UI. <strong>fullscreen</strong> — takes up the entire screen. <strong>minimal-ui</strong> — includes minimal browser navigation. <strong>browser</strong> — opens in a regular browser tab.</small>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="col-lg-6 mb-4">
+                            <p class="form-label">Preview</p>
+                            <pre class="manifest-preview" id="manifest-preview"></pre>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- HTML tab -->
+                <div class="tab-pane" id="tab-html">
+                    <h2 class="tab-pane-title"><i class="bi bi-code-slash"></i> HTML</h2>
+                    <div class="row">
+                        <div class="col-lg-8 mb-4">
+                            <p>These tags are included in the <code>README.md</code> inside your ZIP export. Add them to the <code>&lt;head&gt;</code> of your HTML.</p>
+                            <p class="form-label">HTML</p>
+                            <pre class="manifest-preview" id="html-preview"></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export tab -->
+                <div class="tab-pane" id="tab-export">
+                    <h2 class="tab-pane-title"><i class="bi bi-download"></i> Export</h2>
+                    <div class="row">
+                        <div class="col-lg-6 mb-4">
+                            <p>Download all generated icons and your manifest file as a single ZIP archive, ready to deploy.</p>
+                            <div class="export-file-list mb-4">
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="canvas-512" data-filename="icon-512x512.png" checked><i class="bi bi-file-image"></i> icon-512x512.png</label>
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="canvas-256" data-filename="icon-256x256.png" checked><i class="bi bi-file-image"></i> icon-256x256.png</label>
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="canvas-192" data-filename="icon-192x192.png" checked><i class="bi bi-file-image"></i> icon-192x192.png</label>
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="canvas-180" data-filename="apple-touch-icon.png" checked><i class="bi bi-file-image"></i> apple-touch-icon.png <span class="export-badge">180×180</span></label>
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="canvas-152" data-filename="icon-152x152.png" checked><i class="bi bi-file-image"></i> icon-152x152.png</label>
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="canvas-144" data-filename="icon-144x144.png" checked><i class="bi bi-file-image"></i> icon-144x144.png</label>
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="canvas-128" data-filename="icon-128x128.png" checked><i class="bi bi-file-image"></i> icon-128x128.png</label>
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="canvas-96" data-filename="icon-96x96.png" checked><i class="bi bi-file-image"></i> icon-96x96.png</label>
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="canvas-64" data-filename="icon-64x64.png" checked><i class="bi bi-file-image"></i> icon-64x64.png</label>
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="canvas-48" data-filename="icon-48x48.png" checked><i class="bi bi-file-image"></i> icon-48x48.png</label>
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="canvas-32" data-filename="icon-32x32.png" checked><i class="bi bi-file-image"></i> icon-32x32.png</label>
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="canvas-16" data-filename="icon-16x16.png" checked><i class="bi bi-file-image"></i> icon-16x16.png</label>
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="favicon-ico" data-filename="favicon.ico" checked><i class="bi bi-file-image"></i> favicon.ico <span class="export-badge">16 &amp; 32px</span></label>
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="manifest" data-filename="manifest.json" checked><i class="bi bi-filetype-json"></i> manifest.json</label>
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="screenshot-mobile" data-filename="screenshot-mobile.png" checked><i class="bi bi-file-image"></i> screenshot-mobile.png <span class="export-badge">390×844</span></label>
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="screenshot-wide" data-filename="screenshot-wide.png" checked><i class="bi bi-file-image"></i> screenshot-wide.png <span class="export-badge">1280×800</span></label>
+                                <label class="export-file-item"><input type="checkbox" name="export-file" value="readme" data-filename="README.md" checked><i class="bi bi-file-text"></i> README.md</label>
+                            </div>
+                            <button type="button" class="btn btn-dark" id="btn-export-zip"><i class="bi bi-file-zip"></i> Download ZIP</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- About tab -->
+                <div class="tab-pane" id="tab-about">
+                    <h2 class="tab-pane-title"><i class="bi bi-info-circle"></i> About</h2>
+                    <div class="row">
+                        <div class="col-lg-7">
+                            <p><strong>Favicon &amp; PWA Icon Generator</strong> is a free, browser-based tool that creates every icon size your website or Progressive Web App needs — no server uploads, no account required.</p>
+
+                            <h3 class="h5 mt-4 mb-2">What it does</h3>
+                            <ul>
+                                <li>Generates <strong>13 PNG icon sizes</strong> from a single source image: 512, 256, 192, 180, 152, 144, 128, 96, 64, 48, 32, and 16 px.</li>
+                                <li>Produces a <strong>multi-resolution favicon.ico</strong> (16 &amp; 32 px) compatible with all browsers.</li>
+                                <li>Builds a <strong>Web App Manifest</strong> (<code>manifest.json</code>) with configurable name, colours, and display mode.</li>
+                                <li>Generates placeholder <strong>PWA screenshots</strong> (mobile 390×844 and wide 1280×800) required by some install prompts.</li>
+                                <li>Provides ready-to-paste <strong>HTML <code>&lt;head&gt;</code> tags</strong> alongside a <code>README.md</code> with integration instructions.</li>
+                                <li>Packages everything into a single <strong>ZIP archive</strong> for instant deployment.</li>
+                            </ul>
+
+                            <h3 class="h5 mt-4 mb-2">How to use it</h3>
+                            <ol>
+                                <li><strong>Icons</strong> — Upload your source image (PNG, SVG, or JPEG). Optionally apply a shape clip (circle, squircle, or rounded square) and toggle the safe-zone overlay to check maskable icon coverage.</li>
+                                <li><strong>Manifest</strong> — Fill in your app name, description, theme colour, and display mode to generate a valid <code>manifest.json</code>.</li>
+                                <li><strong>HTML</strong> — Copy the generated <code>&lt;link&gt;</code> and <code>&lt;meta&gt;</code> tags into the <code>&lt;head&gt;</code> of your HTML.</li>
+                                <li><strong>Export</strong> — Select the files you need and download the ZIP, then place the contents in your site's root directory.</li>
+                            </ol>
+
+                            <h3 class="h5 mt-4 mb-2">Privacy</h3>
+                            <p>All processing happens entirely in your browser. Your images are never uploaded to any server.</p>
+                            
+                            <div class="author-section">
+                                <h3 class="h5 mt-0 mb-2">Author</h3>
+                                <div class="author-body">
+                                    <img src="img/philip-newborough-yellow-512x512-rounded.png" alt="Philip Newborough" class="author-avatar" width="64" height="64">
+                                    <div>
+                                        <p class="mb-1">Web developer and tech enthusiast. When I'm not coding, I can be found performing Grumpa duties, reading Warhammer 40,000 fiction, listening to tech podcasts or riding my bike.</p>
+                                        <p class="mb-0"><a href="https://philipnewborough.co.uk" target="_blank" rel="noopener">philipnewborough.co.uk</a></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- .tab-content -->
+
+        </div><!-- .tabs -->
+
+        <footer class="page-footer border-top text-muted">
+            <p>&copy; <span id="copyright-year"></span> <a href="https://philipnewborough.co.uk" target="_blank" rel="noopener">Philip Newborough</a>.</p>
+            <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+        </footer>
+
+    </div> <!--.container-->
+</body>
+</html>
