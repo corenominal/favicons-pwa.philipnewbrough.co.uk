@@ -197,6 +197,37 @@ code {
     height: auto;
 }
 
+/* Install section card */
+.install-section {
+    margin-top: 1.5rem;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--accent, #7b61ff);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.25);
+}
+
+/* Install instructions definition list */
+.install-instructions {
+    margin: 0;
+}
+.install-instructions dt {
+    font-weight: 600;
+    margin-top: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.install-instructions dt:first-child {
+    margin-top: 0;
+}
+.install-instructions dd {
+    margin-left: 1.25rem;
+    margin-bottom: 0;
+    opacity: 0.85;
+}
+
 /* Author block: avatar beside bio using flex layout */
 .author-section {
     margin-top: 1.5rem;
