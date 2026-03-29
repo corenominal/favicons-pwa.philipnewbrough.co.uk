@@ -4,7 +4,7 @@
 
 A free, browser-based tool that generates every icon size your website or Progressive Web App needs — no server uploads, no account required. All processing happens entirely in the browser using the Canvas API.
 
-Live at: [favicons-pwa.philipnewbrough.co.uk](https://favicons-pwa.philipnewbrough.co.uk)
+Live at: [favicons-pwa.philipnewborough.co.uk](https://favicons-pwa.philipnewborough.co.uk)
 
 ## Features
 
