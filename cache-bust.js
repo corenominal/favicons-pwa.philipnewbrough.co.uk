@@ -3,7 +3,7 @@
 /**
  * cache-bust.js
  *
- * Computes a content hash for main.css and main.js and updates their
+ * Computes a content hash for main.css, main.js, and metrics.js and updates their
  * references in public/index.html and public/sw.js using query strings
  * (?v={hash}).  Also bumps the SW CACHE_NAME so stale caches are purged.
  *
@@ -34,6 +34,13 @@ const TARGETS = [
     swRef:   /\/js\/main\.js(?:\?v=[a-f0-9]+)?/,
     htmlNew: (h) => `js/main.js?v=${h}`,
     swNew:   (h) => `/js/main.js?v=${h}`,
+  },
+  {
+    file:    join(__dirname, 'public', 'js', 'metrics.js'),
+    htmlRef: /js\/metrics\.js(?:\?v=[a-f0-9]+)?/,
+    swRef:   /\/js\/metrics\.js(?:\?v=[a-f0-9]+)?/,
+    htmlNew: (h) => `js/metrics.js?v=${h}`,
+    swNew:   (h) => `/js/metrics.js?v=${h}`,
   },
 ];
 

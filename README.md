@@ -34,13 +34,13 @@ public/
   vendor/
     bootstrap-icons/ # Icon font
     jszip/           # Client-side ZIP generation
-cache-bust.js       # Node script to hash and version main.css & main.js
+cache-bust.js       # Node script to hash and version main.css, main.js & metrics.js
 package.json
 ```
 
 ## Development
 
-**Cache-busting** — after editing `main.css` or `main.js`, run the following to update the `?v=` query strings in `index.html` and bump the service worker cache name:
+**Cache-busting** — after editing `main.css`, `main.js`, or `metrics.js`, run the following to update the `?v=` query strings in `index.html` and bump the service worker cache name:
 
 ```bash
 npm run cache-bust
