@@ -748,14 +748,29 @@ document.getElementById('btn-export-zip').addEventListener('click', async () => 
         }
     }
     const blob = await zip.generateAsync({ type: 'blob' });
-    const url  = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href     = url;
-    link.download = 'icons-export.zip';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    if (window.showSaveFilePicker) {
+        try {
+            const handle = await window.showSaveFilePicker({
+                suggestedName: 'icons-export.zip',
+                types: [{ description: 'ZIP Archive', accept: { 'application/zip': ['.zip'] } }]
+            });
+            const writable = await handle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+        } catch (err) {
+            if (err.name !== 'AbortError') throw err;
+            return;
+        }
+    } else {
+        const url  = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href     = url;
+        link.download = 'icons-export.zip';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
     notify_send('Success!', 'ZIP archive downloaded.', 'success');
 });
 
